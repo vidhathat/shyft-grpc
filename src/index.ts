@@ -38,6 +38,8 @@ const TXN_FORMATTER = new TransactionFormatter();
 const PUMP_FUN_PROGRAM_ID = new PublicKey(
   "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
 );
+
+const VINE_TOKEN_ID= new PublicKey("6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump");
 const Raydium_amm = new PublicKey("58fzJMbX5PatnfJPqWWsqkVFPRKptkbb5r2vCw4Qq3z9");
 // const Raydium_protocol = new PublicKey("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8");
 const PUMP_FUN_IX_PARSER = new SolanaParser([]);
@@ -78,6 +80,7 @@ async function handleStream(client: Client, args: SubscribeRequest) {
         Date.now(),
       );
       const parsedTxn = decodePumpFunTxn(txn);
+      // console.log('parsedTxn is',JSON.stringify(parsedTxn, null, 2));
 
       if (!parsedTxn) return;
 
@@ -132,10 +135,11 @@ const req: SubscribeRequest = {
       vote: false,
       failed: false,
       signature: undefined,
-      accountInclude: [PUMP_FUN_PROGRAM_ID.toBase58()],
+      accountInclude: [VINE_TOKEN_ID.toBase58()],
       accountExclude: [],
-      accountRequired: [],
+      accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
     },
+
   },
   transactionsStatus: {},
   entry: {},
