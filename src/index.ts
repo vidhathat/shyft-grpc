@@ -36,7 +36,8 @@ const TRACKED_WALLETS = [
 ];
 const TXN_FORMATTER = new TransactionFormatter();
 const PUMP_FUN_PROGRAM_ID = new PublicKey(
-  "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
+  // "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
+  "CHoMPttewvAWpWqJLkfeKU29uKQQhi3NW96pb86Dcby4"
 );
 
 const VINE_TOKEN_ID= new PublicKey("6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump");
@@ -138,9 +139,23 @@ const req: SubscribeRequest = {
       accountInclude: [PUMP_FUN_PROGRAM_ID.toBase58()],
       accountExclude: [],
       accountRequired: [],
-      // accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
     },
-
+    // vineToken: {
+    //   vote: false,
+    //   failed: false,
+    //   signature: undefined,
+    //   accountInclude: [VINE_TOKEN_ID.toBase58()],
+    //   accountExclude: [],
+    //   accountRequired: [],
+    // },
+    // raydiumAmm: {
+    //   vote: false,
+    //   failed: false,
+    //   signature: undefined,
+    //   accountInclude: [Raydium_amm.toBase58()],
+    //   accountExclude: [],
+    //   accountRequired: [],
+    // },
   },
   transactionsStatus: {},
   entry: {},
@@ -160,12 +175,21 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     tx.transaction.message,
     tx.meta.loadedAddresses,
   );
+  console.log("paredIxs", paredIxs);
   const pumpFunIxs = paredIxs.filter((ix) =>
     ix.programId.equals(PUMP_FUN_PROGRAM_ID),
   );
-
+  console.log("pumpFunIxs", pumpFunIxs);
+  const vineTokenIxs = paredIxs.filter((ix) =>
+    ix.programId.equals(VINE_TOKEN_ID),
+  );
+  console.log("vineTokenIxs", vineTokenIxs);
+  const raydiumAmmIxs = paredIxs.filter((ix) =>
+    ix.programId.equals(Raydium_amm),
+  );
+  console.log("raydiumAmmIxs", raydiumAmmIxs);
     // Get all signer accounts from pumpFunIxs
-    const signerAccounts = pumpFunIxs.flatMap(ix => 
+    const signerAccounts = paredIxs.flatMap(ix => 
       ix.accounts.filter(acc => acc.isSigner).map(acc => ({
         instructionName: ix.name,
         programId: ix.programId.toString(),
@@ -177,15 +201,34 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
       }))
     );
   
-    if (signerAccounts.length > 0) {
-      console.log("\n=== Signer Accounts Found ===");
-      console.log(JSON.stringify(signerAccounts, null, 2));
-      console.log("===========================\n");
-    }
+    // if (signerAccounts.length > 0) {
+    //   const signerPubkeys = signerAccounts.map(ix => ix.account.pubkey);
+    //   console.log("\n=== Checking Signer Accounts ===");
+    //   console.log("Signer pubkeys:", signerPubkeys);
+    //   console.log("Looking for wallet:", TRACKED_WALLETS[0]);
+      
+    //   const foundWallet = signerPubkeys.some(pubkey => 
+    //     TRACKED_WALLETS.includes(pubkey)
+    //   );
 
-  if (pumpFunIxs.length === 0) return;
-  const events = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
-  const result = { instructions: pumpFunIxs, events };
+    //   if (foundWallet) {
+    //     console.log("✅ Tracked wallet found in signer accounts!");
+    //     console.log("===========================\n");
+    //     return true;
+    //   } else {
+    //     console.log("❌ No tracked wallet found in signers");
+    //     console.log("===========================\n");
+    //   }
+    // }
+
+  if (pumpFunIxs.length === 0 && vineTokenIxs.length === 0 && raydiumAmmIxs.length === 0) return;
+  const pumpFunEvents = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
+  const vineTokenEvents = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
+  const raydiumAmmEvents = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
+  const vineTokenResult = { instructions: vineTokenIxs, events: vineTokenEvents };
+  const raydiumAmmResult = { instructions: raydiumAmmIxs, events: raydiumAmmEvents };
+  const result = { instructions: [...pumpFunIxs, ...vineTokenIxs, ...raydiumAmmIxs], events: [...pumpFunEvents, ...vineTokenEvents, ...raydiumAmmEvents] };
+  console.log("result", result);
   bnLayoutFormatter(result);
   return result;
 }
