@@ -135,9 +135,10 @@ const req: SubscribeRequest = {
       vote: false,
       failed: false,
       signature: undefined,
-      accountInclude: [VINE_TOKEN_ID.toBase58()],
+      accountInclude: [PUMP_FUN_PROGRAM_ID.toBase58()],
       accountExclude: [],
-      accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
+      accountRequired: [],
+      // accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
     },
 
   },
@@ -159,10 +160,28 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     tx.transaction.message,
     tx.meta.loadedAddresses,
   );
-
   const pumpFunIxs = paredIxs.filter((ix) =>
-    ix.programId.equals(PUMP_FUN_PROGRAM_ID ),
+    ix.programId.equals(PUMP_FUN_PROGRAM_ID),
   );
+
+    // Get all signer accounts from pumpFunIxs
+    const signerAccounts = pumpFunIxs.flatMap(ix => 
+      ix.accounts.filter(acc => acc.isSigner).map(acc => ({
+        instructionName: ix.name,
+        programId: ix.programId.toString(),
+        account: {
+          name: acc.name,
+          pubkey: acc.pubkey.toString(),
+          isWritable: acc.isWritable
+        }
+      }))
+    );
+  
+    if (signerAccounts.length > 0) {
+      console.log("\n=== Signer Accounts Found ===");
+      console.log(JSON.stringify(signerAccounts, null, 2));
+      console.log("===========================\n");
+    }
 
   if (pumpFunIxs.length === 0) return;
   const events = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
