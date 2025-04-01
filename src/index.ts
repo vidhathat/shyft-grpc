@@ -40,16 +40,31 @@ const PUMP_FUN_PROGRAM_ID = new PublicKey(
 );
 
 const VINE_TOKEN_ID= new PublicKey("6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump");
-const Raydium_amm = new PublicKey("58fzJMbX5PatnfJPqWWsqkVFPRKptkbb5r2vCw4Qq3z9");
+const Raydium_amm = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
 // const Raydium_protocol = new PublicKey("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8");
 const PUMP_FUN_IX_PARSER = new SolanaParser([]);
 PUMP_FUN_IX_PARSER.addParserFromIdl(
   PUMP_FUN_PROGRAM_ID.toBase58(),
   pumpFunIdl as Idl,
 );
+
+const RAYDIUM_AMM_IX_PARSER = new SolanaParser([]);
+RAYDIUM_AMM_IX_PARSER.addParserFromIdl(
+  Raydium_amm.toBase58(),
+  pumpFunIdl as Idl,
+);
+
+
+
 const PUMP_FUN_EVENT_PARSER = new SolanaEventParser([], console);
 PUMP_FUN_EVENT_PARSER.addParserFromIdl(
   PUMP_FUN_PROGRAM_ID.toBase58(),
+  pumpFunIdl as Idl,
+);
+
+const RAYDIUM_AMM_EVENT_PARSER = new SolanaEventParser([], console);
+RAYDIUM_AMM_EVENT_PARSER.addParserFromIdl(
+  Raydium_amm.toBase58(),
   pumpFunIdl as Idl,
 );
 
@@ -131,6 +146,15 @@ const req: SubscribeRequest = {
   accounts: {},
   slots: {},
   transactions: {
+
+    raydiumAmm: {
+      vote: false,
+      failed: false,
+      signature: undefined,
+      accountInclude: [Raydium_amm.toBase58()],
+      accountExclude: [],
+      accountRequired: [],  
+    },
     pumpFun: {
       vote: false,
       failed: false,
@@ -140,7 +164,6 @@ const req: SubscribeRequest = {
       accountRequired: [],
       // accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
     },
-
   },
   transactionsStatus: {},
   entry: {},
@@ -163,29 +186,39 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
   const pumpFunIxs = paredIxs.filter((ix) =>
     ix.programId.equals(PUMP_FUN_PROGRAM_ID),
   );
+  const vineTokenIxs = paredIxs.filter((ix) =>
+    ix.programId.equals(VINE_TOKEN_ID),
+  );
 
-    // Get all signer accounts from pumpFunIxs
-    const signerAccounts = pumpFunIxs.flatMap(ix => 
-      ix.accounts.filter(acc => acc.isSigner).map(acc => ({
-        instructionName: ix.name,
-        programId: ix.programId.toString(),
-        account: {
-          name: acc.name,
-          pubkey: acc.pubkey.toString(),
-          isWritable: acc.isWritable
-        }
-      }))
-    );
+  const raydiumAmmIxs = paredIxs.filter((ix) =>
+    ix.programId.equals(Raydium_amm),
+  );
+
+  console.log('raydiumAmmIxs', raydiumAmmIxs);
+
+    // // Get all signer accounts from pumpFunIxs
+    // const signerAccounts = pumpFunIxs.flatMap(ix => 
+    //   ix.accounts.filter(acc => acc.isSigner).map(acc => ({
+    //     instructionName: ix.name,
+    //     programId: ix.programId.toString(),
+    //     account: {
+    //       name: acc.name,
+    //       pubkey: acc.pubkey.toString(),
+    //       isWritable: acc.isWritable
+    //     }
+    //   }))
+    // );
   
-    if (signerAccounts.length > 0) {
-      console.log("\n=== Signer Accounts Found ===");
-      console.log(JSON.stringify(signerAccounts, null, 2));
-      console.log("===========================\n");
-    }
+    // if (signerAccounts.length > 0) {
+    //   console.log("\n=== Signer Accounts Found ===");
+    //   console.log(JSON.stringify(signerAccounts, null, 2));
+    //   console.log("===========================\n");
+    // }
 
-  if (pumpFunIxs.length === 0) return;
+  if (pumpFunIxs.length === 0 && raydiumAmmIxs.length === 0) return;
   const events = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
-  const result = { instructions: pumpFunIxs, events };
+  const raydiumAmmEvents = RAYDIUM_AMM_EVENT_PARSER.parseEvent(tx);
+  const result = { instructions: pumpFunIxs, events, raydiumAmmEvents };
   bnLayoutFormatter(result);
   return result;
 }
