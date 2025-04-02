@@ -41,6 +41,9 @@ const PUMP_FUN_PROGRAM_ID = new PublicKey(
 
 const VINE_TOKEN_ID= new PublicKey("6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump");
 const Raydium_amm = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
+const Chomp_protocol = new PublicKey("CHoMPttewvAWpWqJLkfeKU29uKQQhi3NW96pb86Dcby4");
+const Time_fun = new PublicKey("BcyCjbQYxE2m2xTZ5tTZXDEz8Up7avTmPqhzCrASRKiQ");
+
 // const Raydium_protocol = new PublicKey("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8");
 const PUMP_FUN_IX_PARSER = new SolanaParser([]);
 PUMP_FUN_IX_PARSER.addParserFromIdl(
@@ -48,13 +51,17 @@ PUMP_FUN_IX_PARSER.addParserFromIdl(
   pumpFunIdl as Idl,
 );
 
-const RAYDIUM_AMM_IX_PARSER = new SolanaParser([]);
-RAYDIUM_AMM_IX_PARSER.addParserFromIdl(
-  Raydium_amm.toBase58(),
+const CHOMP_PROTOCOL_IX_PARSER = new SolanaParser([]);
+CHOMP_PROTOCOL_IX_PARSER.addParserFromIdl(
+  Chomp_protocol.toBase58(),
   pumpFunIdl as Idl,
 );
 
-
+const TIME_FUN_IX_PARSER = new SolanaParser([]);
+TIME_FUN_IX_PARSER.addParserFromIdl(
+  Time_fun.toBase58(),
+  pumpFunIdl as Idl,
+);
 
 const PUMP_FUN_EVENT_PARSER = new SolanaEventParser([], console);
 PUMP_FUN_EVENT_PARSER.addParserFromIdl(
@@ -62,11 +69,24 @@ PUMP_FUN_EVENT_PARSER.addParserFromIdl(
   pumpFunIdl as Idl,
 );
 
-const RAYDIUM_AMM_EVENT_PARSER = new SolanaEventParser([], console);
-RAYDIUM_AMM_EVENT_PARSER.addParserFromIdl(
-  Raydium_amm.toBase58(),
+const CHOMP_PROTOCOL_EVENT_PARSER = new SolanaEventParser([], console);
+CHOMP_PROTOCOL_EVENT_PARSER.addParserFromIdl(
+  Chomp_protocol.toBase58(),
+  pumpFunIdl as Idl,
+); 
+
+const TIME_FUN_EVENT_PARSER = new SolanaEventParser([], console);
+TIME_FUN_EVENT_PARSER.addParserFromIdl(
+  Time_fun.toBase58(),
   pumpFunIdl as Idl,
 );
+
+
+// const RAYDIUM_AMM_EVENT_PARSER = new SolanaEventParser([], console);
+// RAYDIUM_AMM_EVENT_PARSER.addParserFromIdl(
+//   Raydium_amm.toBase58(),
+//   pumpFunIdl as Idl,
+// );
 
 async function handleStream(client: Client, args: SubscribeRequest) {
   // Subscribe for events
@@ -146,24 +166,31 @@ const req: SubscribeRequest = {
   accounts: {},
   slots: {},
   transactions: {
-
-    raydiumAmm: {
+    // chompProtocol: {
+    //   vote: false,
+    //   failed: false,
+    //   signature: undefined,
+    //   accountInclude: [Chomp_protocol.toBase58()],
+    //   accountExclude: [],
+    //   accountRequired: [],
+    // },
+    timeFun: {
       vote: false,
       failed: false,
       signature: undefined,
-      accountInclude: [Raydium_amm.toBase58()],
-      accountExclude: [],
-      accountRequired: [],  
-    },
-    pumpFun: {
-      vote: false,
-      failed: false,
-      signature: undefined,
-      accountInclude: [PUMP_FUN_PROGRAM_ID.toBase58()],
+      accountInclude: [Time_fun.toBase58()],
       accountExclude: [],
       accountRequired: [],
-      // accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
     },
+    // pumpFun: {
+    //   vote: false,
+    //   failed: false,
+    //   signature: undefined,
+    //   accountInclude: [PUMP_FUN_PROGRAM_ID.toBase58()],
+    //   accountExclude: [],
+    //   accountRequired: [],
+    //   // accountRequired: [PUMP_FUN_PROGRAM_ID.toBase58()],
+    // },
   },
   transactionsStatus: {},
   entry: {},
@@ -183,18 +210,18 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     tx.transaction.message,
     tx.meta.loadedAddresses,
   );
-  const pumpFunIxs = paredIxs.filter((ix) =>
-    ix.programId.equals(PUMP_FUN_PROGRAM_ID),
-  );
-  const vineTokenIxs = paredIxs.filter((ix) =>
-    ix.programId.equals(VINE_TOKEN_ID),
-  );
+  console.log('paredIxs', paredIxs);
+  // const pumpFunIxs = paredIxs.filter((ix) =>
+  //   ix.programId.equals(PUMP_FUN_PROGRAM_ID),
+  // );
 
-  const raydiumAmmIxs = paredIxs.filter((ix) =>
-    ix.programId.equals(Raydium_amm),
-  );
+  // const chompProtocolIxs = paredIxs.filter((ix) =>
+  //   ix.programId.equals(Chomp_protocol),
+  // );
 
-  console.log('raydiumAmmIxs', raydiumAmmIxs);
+  // const timeFunIxs = paredIxs.filter((ix) =>
+  //   ix.programId.equals(Time_fun),
+  // );
 
     // // Get all signer accounts from pumpFunIxs
     // const signerAccounts = pumpFunIxs.flatMap(ix => 
@@ -215,10 +242,11 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     //   console.log("===========================\n");
     // }
 
-  if (pumpFunIxs.length === 0 && raydiumAmmIxs.length === 0) return;
+  if (paredIxs.length === 0) return;
   const events = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
-  const raydiumAmmEvents = RAYDIUM_AMM_EVENT_PARSER.parseEvent(tx);
-  const result = { instructions: pumpFunIxs, events, raydiumAmmEvents };
+  const chompProtocolEvents = CHOMP_PROTOCOL_EVENT_PARSER.parseEvent(tx);
+  // const timeFunEvents = TIME_FUN_EVENT_PARSER.parseEvent(tx);
+  const result = { instructions: paredIxs, events };
   bnLayoutFormatter(result);
   return result;
 }
