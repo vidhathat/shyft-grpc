@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 import Client, {
   CommitmentLevel,
   SubscribeRequestAccountsDataSlice,
@@ -116,7 +117,7 @@ async function handleStream(client: Client, args: SubscribeRequest) {
         new Date(),
         ":",
         `New transaction https://translator.shyft.to/tx/${txn.transaction.signatures[0]} \n`,
-        JSON.stringify(parsedTxn, null, 2) + "\n",
+        // JSON.stringify(parsedTxn, null, 2) + "\n",
       );
     }
   });
@@ -203,7 +204,6 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     tx.transaction.message,
     tx.meta.loadedAddresses,
   );
-  console.log('paredIxs', paredIxs);
   const pumpFunIxs = paredIxs.filter((ix) =>
     ix.programId.equals(PUMP_FUN_PROGRAM_ID),
   );
@@ -216,7 +216,7 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
   //   ix.programId.equals(Time_fun),
   // );
 
-  const signerAccounts = pumpFunIxs.flatMap(ix => 
+  const signerAccounts = chompProtocolIxs.flatMap(ix => 
     ix.accounts.filter(acc => acc.isSigner).map(acc => ({
       instructionName: ix.name,
       programId: ix.programId.toString(),
@@ -247,11 +247,10 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
       console.log("===========================\n");
     }
   }
-  if (paredIxs.length === 0) return;
+  if (chompProtocolIxs.length === 0) return;
   const events = CHOMP_PROTOCOL_EVENT_PARSER.parseEvent(tx);
-  const chompProtocolEvents = CHOMP_PROTOCOL_EVENT_PARSER.parseEvent(tx);
   // const timeFunEvents = TIME_FUN_EVENT_PARSER.parseEvent(tx);
-  const result = { instructions: paredIxs, events };
+  const result = { instructions: chompProtocolIxs, events };
   bnLayoutFormatter(result);
   return result;
 }
