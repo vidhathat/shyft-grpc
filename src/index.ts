@@ -211,9 +211,9 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     tx.meta.loadedAddresses,
   );
   console.log('paredIxs', paredIxs);
-  // const pumpFunIxs = paredIxs.filter((ix) =>
-  //   ix.programId.equals(PUMP_FUN_PROGRAM_ID),
-  // );
+  const pumpFunIxs = paredIxs.filter((ix) =>
+    ix.programId.equals(PUMP_FUN_PROGRAM_ID),
+  );
 
   // const chompProtocolIxs = paredIxs.filter((ix) =>
   //   ix.programId.equals(Chomp_protocol),
@@ -223,25 +223,37 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
   //   ix.programId.equals(Time_fun),
   // );
 
-    // // Get all signer accounts from pumpFunIxs
-    // const signerAccounts = pumpFunIxs.flatMap(ix => 
-    //   ix.accounts.filter(acc => acc.isSigner).map(acc => ({
-    //     instructionName: ix.name,
-    //     programId: ix.programId.toString(),
-    //     account: {
-    //       name: acc.name,
-    //       pubkey: acc.pubkey.toString(),
-    //       isWritable: acc.isWritable
-    //     }
-    //   }))
-    // );
-  
-    // if (signerAccounts.length > 0) {
-    //   console.log("\n=== Signer Accounts Found ===");
-    //   console.log(JSON.stringify(signerAccounts, null, 2));
-    //   console.log("===========================\n");
-    // }
+  const signerAccounts = pumpFunIxs.flatMap(ix => 
+    ix.accounts.filter(acc => acc.isSigner).map(acc => ({
+      instructionName: ix.name,
+      programId: ix.programId.toString(),
+      account: {
+        name: acc.name,
+        pubkey: acc.pubkey.toString(),
+        isWritable: acc.isWritable
+      }
+    }))
+  );
 
+  if (signerAccounts.length > 0) {
+    console.log("\n=== Checking Signer Accounts ===");
+    console.log("Signer pubkeys:", signerAccounts.map(acc => acc.account.pubkey));
+    console.log("Looking for wallets:", TRACKED_WALLETS);
+    
+    const foundWallets = signerAccounts.filter(acc => 
+      TRACKED_WALLETS.includes(acc.account.pubkey)
+    );
+
+    if (foundWallets.length > 0) {
+      console.log("\n✅ Tracked wallets found in signer accounts!");
+      console.log("Matched wallets:", foundWallets);
+      console.log("===========================\n");
+      return true;
+    } else {
+      console.log("❌ No tracked wallets found in signers");
+      console.log("===========================\n");
+    }
+  }
   if (paredIxs.length === 0) return;
   const events = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
   const chompProtocolEvents = CHOMP_PROTOCOL_EVENT_PARSER.parseEvent(tx);
