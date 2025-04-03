@@ -44,28 +44,9 @@ const Raydium_amm = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4")
 const Chomp_protocol = new PublicKey("CHoMPttewvAWpWqJLkfeKU29uKQQhi3NW96pb86Dcby4");
 const Time_fun = new PublicKey("BcyCjbQYxE2m2xTZ5tTZXDEz8Up7avTmPqhzCrASRKiQ");
 
-// const Raydium_protocol = new PublicKey("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8");
-const PUMP_FUN_IX_PARSER = new SolanaParser([]);
-PUMP_FUN_IX_PARSER.addParserFromIdl(
-  PUMP_FUN_PROGRAM_ID.toBase58(),
-  pumpFunIdl as Idl,
-);
-
 const CHOMP_PROTOCOL_IX_PARSER = new SolanaParser([]);
 CHOMP_PROTOCOL_IX_PARSER.addParserFromIdl(
   Chomp_protocol.toBase58(),
-  pumpFunIdl as Idl,
-);
-
-const TIME_FUN_IX_PARSER = new SolanaParser([]);
-TIME_FUN_IX_PARSER.addParserFromIdl(
-  Time_fun.toBase58(),
-  pumpFunIdl as Idl,
-);
-
-const PUMP_FUN_EVENT_PARSER = new SolanaEventParser([], console);
-PUMP_FUN_EVENT_PARSER.addParserFromIdl(
-  PUMP_FUN_PROGRAM_ID.toBase58(),
   pumpFunIdl as Idl,
 );
 
@@ -75,16 +56,28 @@ CHOMP_PROTOCOL_EVENT_PARSER.addParserFromIdl(
   pumpFunIdl as Idl,
 ); 
 
-const TIME_FUN_EVENT_PARSER = new SolanaEventParser([], console);
-TIME_FUN_EVENT_PARSER.addParserFromIdl(
-  Time_fun.toBase58(),
-  pumpFunIdl as Idl,
-);
+// const TIME_FUN_IX_PARSER = new SolanaParser([]);
+// TIME_FUN_IX_PARSER.addParserFromIdl(
+//   Time_fun.toBase58(),
+//   pumpFunIdl as Idl,
+// );
+
+// const TIME_FUN_EVENT_PARSER = new SolanaEventParser([], console);
+// TIME_FUN_EVENT_PARSER.addParserFromIdl(
+//   Time_fun.toBase58(),
+//   pumpFunIdl as Idl,
+// );  
 
 
-// const RAYDIUM_AMM_EVENT_PARSER = new SolanaEventParser([], console);
-// RAYDIUM_AMM_EVENT_PARSER.addParserFromIdl(
-//   Raydium_amm.toBase58(),
+// const PUMP_FUN_IX_PARSER = new SolanaParser([]);
+// PUMP_FUN_IX_PARSER.addParserFromIdl(
+//   PUMP_FUN_PROGRAM_ID.toBase58(),
+//   pumpFunIdl as Idl,
+// );
+
+// const PUMP_FUN_EVENT_PARSER = new SolanaEventParser([], console);
+// PUMP_FUN_EVENT_PARSER.addParserFromIdl(
+//   PUMP_FUN_PROGRAM_ID.toBase58(),
 //   pumpFunIdl as Idl,
 // );
 
@@ -166,22 +159,22 @@ const req: SubscribeRequest = {
   accounts: {},
   slots: {},
   transactions: {
-    // chompProtocol: {
-    //   vote: false,
-    //   failed: false,
-    //   signature: undefined,
-    //   accountInclude: [Chomp_protocol.toBase58()],
-    //   accountExclude: [],
-    //   accountRequired: [],
-    // },
-    timeFun: {
+    chompProtocol: {
       vote: false,
       failed: false,
       signature: undefined,
-      accountInclude: [Time_fun.toBase58()],
+      accountInclude: [Chomp_protocol.toBase58()],
       accountExclude: [],
       accountRequired: [],
     },
+    // timeFun: {
+    //   vote: false,
+    //   failed: false,
+    //   signature: undefined,
+    //   accountInclude: [Time_fun.toBase58()],
+    //   accountExclude: [],
+    //   accountRequired: [],
+    // },
     // pumpFun: {
     //   vote: false,
     //   failed: false,
@@ -206,7 +199,7 @@ subscribeCommand(client, req);
 function decodePumpFunTxn(tx: VersionedTransactionResponse) {
   if (tx.meta?.err) return;
 
-  const paredIxs = PUMP_FUN_IX_PARSER.parseTransactionData(
+  const paredIxs = CHOMP_PROTOCOL_IX_PARSER.parseTransactionData(
     tx.transaction.message,
     tx.meta.loadedAddresses,
   );
@@ -215,9 +208,9 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     ix.programId.equals(PUMP_FUN_PROGRAM_ID),
   );
 
-  // const chompProtocolIxs = paredIxs.filter((ix) =>
-  //   ix.programId.equals(Chomp_protocol),
-  // );
+  const chompProtocolIxs = paredIxs.filter((ix) =>
+    ix.programId.equals(Chomp_protocol),
+  );
 
   // const timeFunIxs = paredIxs.filter((ix) =>
   //   ix.programId.equals(Time_fun),
@@ -255,7 +248,7 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     }
   }
   if (paredIxs.length === 0) return;
-  const events = PUMP_FUN_EVENT_PARSER.parseEvent(tx);
+  const events = CHOMP_PROTOCOL_EVENT_PARSER.parseEvent(tx);
   const chompProtocolEvents = CHOMP_PROTOCOL_EVENT_PARSER.parseEvent(tx);
   // const timeFunEvents = TIME_FUN_EVENT_PARSER.parseEvent(tx);
   const result = { instructions: paredIxs, events };
