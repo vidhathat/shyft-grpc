@@ -230,9 +230,23 @@ function decodePumpFunTxn(tx: VersionedTransactionResponse) {
     );
   
     if (signerAccounts.length > 0) {
-      console.log("\n=== Signer Accounts Found ===");
-      console.log(JSON.stringify(signerAccounts, null, 2));
-      console.log("===========================\n");
+      console.log("\n=== Checking Signer Accounts ===");
+      console.log("Signer pubkeys:", signerAccounts.map(acc => acc.account.pubkey));
+      console.log("Looking for wallets:", TRACKED_WALLETS);
+      
+      const foundWallets = signerAccounts.filter(acc => 
+        TRACKED_WALLETS.includes(acc.account.pubkey)
+      );
+
+      if (foundWallets.length > 0) {
+        console.log("\n✅ Tracked wallets found in signer accounts!");
+        console.log("Matched wallets:", foundWallets);
+        console.log("===========================\n");
+        return true;
+      } else {
+        console.log("❌ No tracked wallets found in signers");
+        console.log("===========================\n");
+      }
     }
 
   if (paredIxs.length === 0) return;
